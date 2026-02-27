@@ -243,7 +243,7 @@ class UpscalerTensorrt:
     RETURN_NAMES = ("IMAGE",)
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "upscaler_tensorrt"
-    CATEGORY = "tensorrt"
+    CATEGORY = "⚡️ TensorRT"
     DESCRIPTION = "Upscale images with tensorrt"
 
     def upscaler_tensorrt(self, **kwargs):
@@ -327,7 +327,7 @@ class LoadUpscalerTensorrtModel:
     RETURN_NAMES = ("upscaler_trt_model",)
     RETURN_TYPES = ("UPSCALER_TRT_MODEL",)
     # FUNCTION = "main" # This was duplicated, removing
-    CATEGORY = "tensorrt"
+    CATEGORY = "⚡️ TensorRT"
     DESCRIPTION = "Load tensorrt models, they will be built automatically if not found."
     FUNCTION = "load_upscaler_tensorrt_model" # This is the correct one
     
