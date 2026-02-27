@@ -1,4 +1,8 @@
 import os
+import sys
+import subprocess
+import re
+from pathlib import Path
 import folder_paths
 import numpy as np
 import torch
@@ -7,8 +11,152 @@ from .trt_utilities import Engine
 from .utilities import download_file, ColoredLogger, get_final_resolutions
 import comfy.model_management as mm
 import time
+import json
+
+# Auto-detect CUDA and install appropriate TensorRT packages
+def _auto_install_tensorrt():
+    """Auto-detect CUDA version and install appropriate TensorRT packages if needed"""
+    try:
+        # Check if TensorRT is already installed
+        try:
+            import tensorrt
+            print("✅ TensorRT already installed")
+            return True
+        except ImportError:
+            print("🔍 TensorRT not found, detecting CUDA version...")
+        
+        # Detect CUDA version
+        cuda_version = None
+        
+        # Try nvcc command
+        try:
+            result = subprocess.run("nvcc --version", shell=True, capture_output=True, text=True)
+            if result.returncode == 0:
+                match = re.search(r"release (\d+\.\d+)", result.stdout)
+                if match:
+                    cuda_version = match.group(1)
+                    print(f"✅ Detected CUDA version: {cuda_version}")
+        except:
+            pass
+        
+        # Try CUDA_PATH
+        if not cuda_version and os.environ.get("CUDA_PATH"):
+            nvcc_path = os.path.join(os.environ["CUDA_PATH"], "bin", "nvcc")
+            if os.path.exists(nvcc_path):
+                try:
+                    result = subprocess.run(f"{nvcc_path} --version", shell=True, capture_output=True, text=True)
+                    if result.returncode == 0:
+                        match = re.search(r"release (\d+\.\d+)", result.stdout)
+                        if match:
+                            cuda_version = match.group(1)
+                            print(f"✅ Detected CUDA via CUDA_PATH: {cuda_version}")
+                except:
+                    pass
+        
+        # Try CUDA_HOME
+        if not cuda_version and os.environ.get("CUDA_HOME"):
+            nvcc_path = os.path.join(os.environ["CUDA_HOME"], "bin", "nvcc")
+            if os.path.exists(nvcc_path):
+                try:
+                    result = subprocess.run(f"{nvcc_path} --version", shell=True, capture_output=True, text=True)
+                    if result.returncode == 0:
+                        match = re.search(r"release (\d+\.\d+)", result.stdout)
+                        if match:
+                            cuda_version = match.group(1)
+                            print(f"✅ Detected CUDA via CUDA_HOME: {cuda_version}")
+                except:
+                    pass
+        
+        if not cuda_version:
+            print("⚠️  Could not detect CUDA version automatically")
+            print("Please run 'python install.py' manually to install TensorRT")
+            return False
+        
+        # Install appropriate TensorRT packages
+        major_version = int(cuda_version.split('.')[0])
+        
+        if major_version == 13:
+            print("🚀 Installing CUDA 13 TensorRT packages (RTX 50 series)")
+            packages = [
+                "tensorrt_cu13==10.15.1.29",
+                "tensorrt_cu13_bindings==10.15.1.29", 
+                "tensorrt_cu13_libs==10.15.1.29",
+                "cuda-toolkit>=13.0.0,<13.1.0"
+            ]
+        elif major_version == 12:
+            print("🔧 Installing CUDA 12 TensorRT packages (RTX 30/40 series)")
+            packages = [
+                "tensorrt-cu12==10.13.3.9",
+                "tensorrt-cu12-libs==10.13.3.9",
+                "tensorrt-cu12-bindings==10.13.3.9",
+                "cuda-toolkit>=12.8.0,<13.0.0"
+            ]
+        else:
+            print(f"❌ Unsupported CUDA version: {cuda_version}")
+            return False
+        
+        # Install packages
+        for package in packages:
+            print(f"Installing {package}...")
+            result = subprocess.run([sys.executable, "-m", "pip", "install", package], capture_output=True)
+            if result.returncode != 0:
+                print(f"❌ Failed to install {package}")
+                print(f"Error: {result.stderr.decode()}")
+                return False
+        
+        print("✅ TensorRT installation completed successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Auto-installation failed: {e}")
+        print("Please run 'python install.py' manually to install TensorRT")
+        return False
+
+# Auto-detect CUDA toolkit and add DLL path before importing polygraphy
+def _setup_cuda_dll_path():
+    """Auto-detect CUDA toolkit and add cudart64 DLL path on Windows."""
+    if not sys.platform.startswith("win"):
+        return
+    
+    cuda_root = None
+    
+    # Check for CUDA_PATH or CUDA_HOME environment variables
+    cuda_root = os.environ.get("CUDA_PATH") or os.environ.get("CUDA_HOME")
+    
+    if not cuda_root:
+        # Try default Windows install location
+        program_files = os.environ.get("PROGRAMFILES")
+        if program_files:
+            cuda_base = Path(program_files) / "NVIDIA GPU Computing Toolkit" / "CUDA"
+            if cuda_base.exists():
+                # Find highest version directory
+                versions = sorted([d for d in cuda_base.iterdir() if d.is_dir()], reverse=True)
+                if versions:
+                    cuda_root = str(versions[0])
+    
+    if cuda_root:
+        cuda_path = Path(cuda_root)
+        # CUDA 13.0+ puts cudart64 in bin/x64 subdirectory
+        cuda_bin_x64 = cuda_path / "bin" / "x64"
+        if cuda_bin_x64.exists() and any(cuda_bin_x64.glob("cudart64*.dll")):
+            os.add_dll_directory(str(cuda_bin_x64))
+            return
+        # Fallback to regular bin directory for older CUDA versions
+        cuda_bin = cuda_path / "bin"
+        if cuda_bin.exists() and any(cuda_bin.glob("cudart64*.dll")):
+            os.add_dll_directory(str(cuda_bin))
+            return
+    
+    # CUDA toolkit not found - print warning with download link
+    print("[ComfyUI-Upscaler-TensorRT] WARNING: CUDA toolkit not found.")
+    print("    Set CUDA_PATH environment variable or install CUDA toolkit.")
+    print("    Download: https://developer.nvidia.com/cuda-13-0-2-download-archive")
+
+# Run auto-install and setup on module import
+_auto_install_tensorrt()
+_setup_cuda_dll_path()
+
 import tensorrt
-import json # <--- Import json module
 
 logger = ColoredLogger("ComfyUI-Upscaler-Tensorrt")
 

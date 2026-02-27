@@ -20,19 +20,13 @@ This project provides a [Tensorrt](https://github.com/NVIDIA/TensorRT) implement
 ## ⭐ Support
 If you like my projects and wish to see updates and new features, please consider supporting me. It helps a lot! 
 
-[![ComfyUI-Depth-Anything-Tensorrt](https://img.shields.io/badge/ComfyUI--Depth--Anything--Tensorrt-blue?style=flat-square)](https://github.com/yuvraj108c/ComfyUI-Depth-Anything-Tensorrt)
-[![ComfyUI-Upscaler-Tensorrt](https://img.shields.io/badge/ComfyUI--Upscaler--Tensorrt-blue?style=flat-square)](https://github.com/yuvraj108c/ComfyUI-Upscaler-Tensorrt)
-[![ComfyUI-Dwpose-Tensorrt](https://img.shields.io/badge/ComfyUI--Dwpose--Tensorrt-blue?style=flat-square)](https://github.com/yuvraj108c/ComfyUI-Dwpose-Tensorrt)
-[![ComfyUI-Rife-Tensorrt](https://img.shields.io/badge/ComfyUI--Rife--Tensorrt-blue?style=flat-square)](https://github.com/yuvraj108c/ComfyUI-Rife-Tensorrt)
+[![ComfyUI-QwenVL-Mod](https://img.shields.io/badge/ComfyUI--QwenVL--Mod-blue?style=flat-square)](https://github.com/huchukato/ComfyUI-QwenVL-Mod)
+[![comfy-tagcomplete](https://img.shields.io/badge/comfy--tagcomplete-blue?style=flat-square)](https://github.com/huchukato/comfy-tagcomplete)
+[![ComfyUI-HuggingFace](https://img.shields.io/badge/ComfyUI--HuggingFace-blue?style=flat-square)](https://github.com/huchukato/ComfyUI-HuggingFace)
+[![ComfyUI-Rife-Tensorrt](https://img.shields.io/badge/ComfyUI--Rife--Tensorrt-blue?style=flat-square)](https://github.com/huchukato/ComfyUI-RIFE-TensorRT-Auto)
+[![stemify-audio-splitter](https://img.shields.io/badge/stemify--audio--splitter-blue?style=flat-square)](https://github.com/huchukato/stemify-audio-splitter)
 
-[![ComfyUI-Whisper](https://img.shields.io/badge/ComfyUI--Whisper-gray?style=flat-square)](https://github.com/yuvraj108c/ComfyUI-Whisper)
-[![ComfyUI_InvSR](https://img.shields.io/badge/ComfyUI__InvSR-gray?style=flat-square)](https://github.com/yuvraj108c/ComfyUI_InvSR)
-[![ComfyUI-Thera](https://img.shields.io/badge/ComfyUI--Thera-gray?style=flat-square)](https://github.com/yuvraj108c/ComfyUI-Thera)
-[![ComfyUI-Video-Depth-Anything](https://img.shields.io/badge/ComfyUI--Video--Depth--Anything-gray?style=flat-square)](https://github.com/yuvraj108c/ComfyUI-Video-Depth-Anything)
-[![ComfyUI-PiperTTS](https://img.shields.io/badge/ComfyUI--PiperTTS-gray?style=flat-square)](https://github.com/yuvraj108c/ComfyUI-PiperTTS)
-
-[![buy-me-coffees](https://i.imgur.com/3MDbAtw.png)](https://www.buymeacoffee.com/yuvraj108cZ)
-[![paypal-donation](https://i.imgur.com/w5jjubk.png)](https://paypal.me/yuvraj108c)
+[![buy-me-coffees](https://i.imgur.com/3MDbAtw.png)](https://buymeacoffee.com/huchukato)
 ---
 
 ## ⏱️ Performance
@@ -49,14 +43,52 @@ _Note: The following results were benchmarked on FP16 engines inside ComfyUI, us
 |  RTX3060  | 4x-UltraSharp |       1280 x 1280      |       5120 x 5120       |  0.35  |
 
 ## 🚀 Installation
-- Install via the manager
-- Or, navigate to the `/ComfyUI/custom_nodes` directory
 
+### 🎯 Fully Automatic Installation (Recommended)
+This node features fully automatic CUDA detection and TensorRT installation!
+When ComfyUI loads the node for the first time, it will:
+1. Auto-detect your CUDA version (12 or 13)
+2. Install the appropriate TensorRT packages automatically
+3. Configure everything for seamless operation
+No manual steps required! Just clone the repo and restart ComfyUI.
+
+### 📦 Manual Installation Options
+If you prefer manual installation or encounter issues:
+Auto-install scripts:
 ```bash
-git clone https://github.com/yuvraj108c/ComfyUI-Upscaler-Tensorrt.git
-cd ./ComfyUI-Upscaler-Tensorrt
-pip install -r requirements.txt
+# Linux/macOS
+./install.sh
+
+# Windows
+install.bat
+
+# Python (cross-platform)
+python install.py
 ```
+
+Manual requirements files:
+```bash
+# For CUDA 13 (RTX 50 series)
+pip install -r requirements.txt
+
+# For CUDA 12 (RTX 30/40 series) - LEGACY METHOD
+pip install -r requirements_cu12.txt
+```
+
+💡 Note: The requirements_cu12.txt is provided as a legacy fallback method. The automatic installation is strongly recommended as it handles CUDA detection and package installation seamlessly.
+
+### 📦 CUDA Toolkit Required
+The node automatically detects your CUDA installation via CUDA_PATH or CUDA_HOME environment variables.
+
+```
+CUDA_PATH
+```
+
+```
+CUDA_HOME
+```
+
+If CUDA is not detected, download from: [https://developer.nvidia.com/cuda-13-0-2-download-archive](https://developer.nvidia.com/cuda-13-0-2-download-archive)
 
 ## 🛠️ Supported Models
 
