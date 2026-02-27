@@ -126,6 +126,7 @@ torch_to_numpy_dtype_dict = {
 }
 
 class TQDMProgressMonitor:
+    """Progress monitor that works with both real and dummy TensorRT"""
     def __init__(self):
         trt = get_trt()
         # Initialize attributes regardless of TensorRT availability
