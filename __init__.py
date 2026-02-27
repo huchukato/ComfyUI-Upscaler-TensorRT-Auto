@@ -248,18 +248,21 @@ class UpscalerTensorrt:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "images": ("IMAGE", {"tooltip": f"Images to be upscaled. Resolution must be between {IMAGE_DIM_MIN} and {IMAGE_DIM_MAX} px"}),
+                "images": ("IMAGE", {"tooltip": "Input images for upscaling"}),
                 "upscaler_trt_model": ("UPSCALER_TRT_MODEL", {"tooltip": "Tensorrt model built and loaded"}),
-                "resize_to": (["none", "custom", "HD", "FHD", "2k", "4k", "1x", "1.5x", "2x", "2.5x", "3x", "3.5x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"], {"tooltip": "Resize the upscaled image to fixed resolutions, optional"}),
-                "resize_width": ("INT", {"default": 1024, "min": 1, "max": 8192}),
-                "resize_height": ("INT", {"default": 1024, "min": 1, "max": 8192}),
+                "resize_to": (["2x", "3x", "4x", "custom"], {"default": "2x", "tooltip": "Target upscaling factor"}),
+            },
+            "optional": {
+                "resize_width": ("INT", {"default": 2048, "min": 256, "max": 4096, "step": 8, "tooltip": "Custom width (used when resize_to='custom')"}),
+                "resize_height": ("INT", {"default": 2048, "min": 256, "max": 4096, "step": 8, "tooltip": "Custom height (used when resize_to='custom')"}),
             }
         }
-    RETURN_NAMES = ("IMAGE",)
+
+    RETURN_NAMES = ("upscaled_images",)
     RETURN_TYPES = ("IMAGE",)
-    FUNCTION = "upscaler_tensorrt"
-    CATEGORY = "⚡️ TensorRT"
-    DESCRIPTION = "Upscale images with tensorrt"
+    CATEGORY = "⚡️ TensorRT/Upscaler"
+    DESCRIPTION = "Upscale images using TensorRT acceleration."
+    FUNCTION = "main"
 
     def upscaler_tensorrt(self, **kwargs):
         images = kwargs.get("images")
@@ -342,7 +345,7 @@ class LoadUpscalerTensorrtModel:
     RETURN_NAMES = ("upscaler_trt_model",)
     RETURN_TYPES = ("UPSCALER_TRT_MODEL",)
     # FUNCTION = "main" # This was duplicated, removing
-    CATEGORY = "⚡️ TensorRT"
+    CATEGORY = "⚡️ TensorRT/Upscaler"
     DESCRIPTION = "Load tensorrt models, they will be built automatically if not found."
     FUNCTION = "load_upscaler_tensorrt_model" # This is the correct one
     
