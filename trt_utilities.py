@@ -29,17 +29,49 @@ from polygraphy.backend.trt import (
     save_engine,
 )
 from polygraphy.logger import G_LOGGER
-try:
-    import tensorrt as trt
-    TRT_LOGGER = trt.Logger(trt.Logger.ERROR)
-except ImportError as e:
-    print(f"[ComfyUI-Upscaler-TensorRT] Warning: TensorRT not available: {e}")
-    # Create dummy tensorrt module for graceful fallback
-    import types
-    trt = types.ModuleType('tensorrt')
-    trt.Logger = types.ModuleType('Logger')
-    trt.Logger.ERROR = 0
-    TRT_LOGGER = None
+
+# Lazy import tensorrt to avoid import conflicts
+_trt = None
+_trt_available = False
+
+def get_trt():
+    global _trt, _trt_available
+    if _trt is None:
+        try:
+            import tensorrt as trt
+            _trt = trt
+            _trt_available = True
+        except ImportError:
+            print("[ComfyUI-Upscaler-TensorRT] Warning: TensorRT not available")
+            # Create dummy tensorrt module for graceful fallback
+            import types
+            trt = types.ModuleType('tensorrt')
+            trt.Logger = types.ModuleType('Logger')
+            trt.Logger.ERROR = 0
+            trt.Logger.WARNING = 1
+            trt.BuilderFlag = types.ModuleType('BuilderFlag')
+            trt.BuilderFlag.FP16 = 1
+            trt.BuilderFlag.REFIT = 2
+            trt.OnnxParserFlag = types.ModuleType('OnnxParserFlag')
+            trt.OnnxParserFlag.NATIVE_INSTANCENORM = 1
+            trt.TensorIOMode = types.ModuleType('TensorIOMode')
+            trt.TensorIOMode.INPUT = 0
+            trt.TensorIOMode.OUTPUT = 1
+            trt.nptype = lambda x: np.float32  # dummy fallback
+            trt.IProgressMonitor = object  # dummy fallback
+            _trt = trt
+            _trt_available = False
+    return _trt
+
+def is_trt_available():
+    global _trt_available
+    return _trt_available
+
+def get_trt_logger():
+    trt = get_trt()
+    return trt.Logger(trt.Logger.ERROR)
+
+TRT_LOGGER = get_trt_logger()
 G_LOGGER.module_severity = G_LOGGER.ERROR
 
 # Map of numpy dtype -> torch dtype
@@ -65,8 +97,9 @@ torch_to_numpy_dtype_dict = {
     value: key for (key, value) in numpy_to_torch_dtype_dict.items()
 }
 
-class TQDMProgressMonitor(trt.IProgressMonitor):
+class TQDMProgressMonitor:
     def __init__(self):
+        trt = get_trt()
         trt.IProgressMonitor.__init__(self)
         self._active_phases = {}
         self._step_result = True
@@ -190,8 +223,9 @@ class Engine:
         if not enable_all_tactics:
             config_kwargs["tactic_sources"] = []
 
+        trt_instance = get_trt()
         network = network_from_onnx_path(
-            onnx_path, flags=[trt.OnnxParserFlag.NATIVE_INSTANCENORM]
+            onnx_path, flags=[trt_instance.OnnxParserFlag.NATIVE_INSTANCENORM]
         )
         if update_output_names:
             print(f"Updating network outputs to {update_output_names}")
@@ -201,8 +235,9 @@ class Engine:
         config = builder.create_builder_config()
         config.progress_monitor = TQDMProgressMonitor()
 
-        config.set_flag(trt.BuilderFlag.FP16) if fp16 else None
-        config.set_flag(trt.BuilderFlag.REFIT) if enable_refit else None
+        trt_instance = get_trt()
+        config.set_flag(trt_instance.BuilderFlag.FP16) if fp16 else None
+        config.set_flag(trt_instance.BuilderFlag.REFIT) if enable_refit else None
 
         profiles = copy.deepcopy(p)
         for profile in profiles:
@@ -247,8 +282,9 @@ class Engine:
             else:
                 shape = self.context.get_tensor_shape(name)
 
-            dtype = trt.nptype(self.engine.get_tensor_dtype(name))
-            if self.engine.get_tensor_mode(name) == trt.TensorIOMode.INPUT:
+            trt_instance = get_trt()
+            dtype = trt_instance.nptype(self.engine.get_tensor_dtype(name))
+            if self.engine.get_tensor_mode(name) == trt_instance.TensorIOMode.INPUT:
                 self.context.set_input_shape(name, shape)
             tensor = torch.empty(
                 tuple(shape), dtype=numpy_to_torch_dtype_dict[dtype]
