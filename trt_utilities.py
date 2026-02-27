@@ -34,6 +34,39 @@ from polygraphy.logger import G_LOGGER
 _trt = None
 _trt_available = False
 
+def get_trt():
+    global _trt, _trt_available
+    if _trt is None:
+        try:
+            import tensorrt as trt
+            _trt = trt
+            _trt_available = True
+        except ImportError:
+            print("[ComfyUI-Upscaler-TensorRT] Warning: TensorRT not available")
+            _trt = None
+            _trt_available = False
+    return _trt
+
+def is_trt_available():
+    global _trt_available
+    return _trt_available
+
+def get_trt_logger():
+    trt = get_trt()
+    if trt:
+        return trt.Logger(trt.Logger.ERROR)
+    else:
+        # Create a simple fallback logger
+        class SimpleLogger:
+            def __init__(self, level):
+                self.level = level
+            ERROR = 0
+            WARNING = 1
+        return SimpleLogger(SimpleLogger.ERROR)
+
+TRT_LOGGER = get_trt_logger()
+G_LOGGER.module_severity = G_LOGGER.ERROR
+
 # Create dummy classes that need to be accessible globally
 class DummyIProgressMonitor:
     def __init__(self):
