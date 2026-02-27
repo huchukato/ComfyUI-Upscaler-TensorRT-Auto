@@ -1,8 +1,18 @@
 #!/bin/bash
 
-# Auto-install script for ComfyUI Upscaler TensorRT (Linux/macOS)
-# Detects CUDA version and installs appropriate requirements
+# FALLBACK install script for ComfyUI Upscaler TensorRT (Linux/macOS)
+# 
+# NOTE: This is a BACKUP script - auto-installation is recommended!
+# 
+# PRIMARY METHOD (Recommended):
+# 1. pip install -r requirements.txt
+# 2. Restart ComfyUI
+# 3. Node auto-detects CUDA and installs TensorRT automatically
+#
+# Use this script ONLY if auto-installation fails!
+#
 
+echo "⚠️  FALLBACK INSTALLATION - Use only if auto-installation fails!"
 echo "🔍 Detecting CUDA version..."
 
 # Try nvcc command
@@ -45,12 +55,19 @@ MAJOR_VERSION=$(echo $CUDA_VERSION | cut -d. -f1)
 
 echo "📦 Installing requirements for CUDA $MAJOR_VERSION..."
 
+# Install appropriate requirements based on CUDA version
 if [ "$MAJOR_VERSION" = "13" ]; then
-    echo "🚀 Using CUDA 13 requirements (RTX 50 series)"
-    python3 -m pip install tensorrt_cu13==10.15.1.29 tensorrt_cu13_bindings==10.15.1.29 tensorrt_cu13_libs==10.15.1.29 "cuda-toolkit>=13.0.0,<13.1.0" polygraphy requests
+    echo "🚀 Installing CUDA 13 requirements (RTX 50 series)"
+    echo "📦 Installing base dependencies + CUDA 13 TensorRT..."
+    python3 -m pip install -r requirements.txt
+    echo "📦 Installing CUDA 13 specific TensorRT packages..."
+    python3 -m pip install -r requirements_cu13.txt
 elif [ "$MAJOR_VERSION" = "12" ]; then
-    echo "🔧 Using CUDA 12 requirements (RTX 30/40 series)"
-    python3 -m pip install tensorrt-cu12==10.13.3.9 tensorrt-cu12-libs==10.13.3.9 tensorrt-cu12-bindings==10.13.3.9 "cuda-toolkit>=12.8.0,<13.0.0" polygraphy requests
+    echo "🔧 Installing CUDA 12 requirements (RTX 30/40 series)"
+    echo "📦 Installing base dependencies + CUDA 12 TensorRT..."
+    python3 -m pip install -r requirements.txt
+    echo "📦 Installing CUDA 12 specific TensorRT packages..."
+    python3 -m pip install -r requirements_cu12.txt
 else
     echo "❌ Unsupported CUDA version: $CUDA_VERSION"
     echo "Supported versions: CUDA 12.x, CUDA 13.x"
@@ -58,8 +75,9 @@ else
 fi
 
 if [ $? -eq 0 ]; then
-    echo "✅ Installation completed successfully!"
-    echo "🎯 You can now use the ComfyUI Upscaler TensorRT node"
+    echo "✅ Fallback installation completed!"
+    echo "🎯 You can now use ComfyUI Upscaler TensorRT node"
+    echo "💡 In the future, try auto-installation by just installing requirements.txt"
 else
     echo "❌ Installation failed!"
     exit 1
