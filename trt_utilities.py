@@ -28,6 +28,8 @@ from polygraphy.backend.trt import (
     network_from_onnx_path,
     save_engine,
 )
+from tqdm import tqdm
+import copy
 from polygraphy.logger import G_LOGGER
 
 # Lazy import tensorrt to avoid import conflicts
@@ -304,12 +306,8 @@ class Engine:
         builder = network[0]
         config = builder.create_builder_config()
         
-        # Simple progress monitor - only if TensorRT is available
-        if is_trt_available():
-            try:
-                config.progress_monitor = TQDMProgressMonitor()
-            except Exception as e:
-                print(f"Warning: Could not set progress monitor: {e}")
+        # Skip progress monitor for simplicity - avoid interface issues
+        # config.progress_monitor = TQDMProgressMonitor()
 
         trt_instance = get_trt()
         config.set_flag(trt_instance.BuilderFlag.FP16) if fp16 else None
