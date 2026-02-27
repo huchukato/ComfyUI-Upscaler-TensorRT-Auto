@@ -29,12 +29,17 @@ from polygraphy.backend.trt import (
     save_engine,
 )
 from polygraphy.logger import G_LOGGER
-import tensorrt as trt
-from logging import error, warning
-from tqdm import tqdm
-import copy
-
-TRT_LOGGER = trt.Logger(trt.Logger.ERROR)
+try:
+    import tensorrt as trt
+    TRT_LOGGER = trt.Logger(trt.Logger.ERROR)
+except ImportError as e:
+    print(f"[ComfyUI-Upscaler-TensorRT] Warning: TensorRT not available: {e}")
+    # Create dummy tensorrt module for graceful fallback
+    import types
+    trt = types.ModuleType('tensorrt')
+    trt.Logger = types.ModuleType('Logger')
+    trt.Logger.ERROR = 0
+    TRT_LOGGER = None
 G_LOGGER.module_severity = G_LOGGER.ERROR
 
 # Map of numpy dtype -> torch dtype

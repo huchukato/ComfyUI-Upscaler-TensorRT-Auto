@@ -16,6 +16,12 @@ import json
 # Auto-detect CUDA and install appropriate TensorRT packages
 def _auto_install_tensorrt():
     """Auto-detect CUDA version and install appropriate TensorRT packages if needed"""
+    # Check if auto-install is disabled
+    disable_auto_install = os.environ.get("DISABLE_TENSORRT_AUTO_INSTALL", "false").lower() == "true"
+    if disable_auto_install:
+        print("[ComfyUI-Upscaler-TensorRT] Auto-installation disabled via DISABLE_TENSORRT_AUTO_INSTALL")
+        return True
+    
     try:
         # Check if TensorRT is already installed
         try:
@@ -154,7 +160,16 @@ def _setup_cuda_dll_path():
 
 # Run auto-install and setup on module import
 try:
-    _auto_install_tensorrt()
+    # Check if other TensorRT nodes are already loaded to avoid conflicts
+    other_trt_nodes = ["ComfyUI-RIFE-TensorRT-Auto"]
+    other_trt_loaded = any(node in sys.modules for node in other_trt_nodes)
+    
+    if other_trt_loaded:
+        print("[ComfyUI-Upscaler-TensorRT] Other TensorRT nodes detected, skipping auto-installation")
+        print("Set DISABLE_TENSORRT_AUTO_INSTALL=true to force auto-installation")
+    else:
+        _auto_install_tensorrt()
+    
     _setup_cuda_dll_path()
 except Exception as e:
     print(f"[ComfyUI-Upscaler-TensorRT] Warning: Auto-installation failed: {e}")
