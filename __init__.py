@@ -153,12 +153,38 @@ def _setup_cuda_dll_path():
     print("    Download: https://developer.nvidia.com/cuda-13-0-2-download-archive")
 
 # Run auto-install and setup on module import
-_auto_install_tensorrt()
-_setup_cuda_dll_path()
+try:
+    _auto_install_tensorrt()
+    _setup_cuda_dll_path()
+except Exception as e:
+    print(f"[ComfyUI-Upscaler-TensorRT] Warning: Auto-installation failed: {e}")
+    print("Please run 'python install.py' manually to install TensorRT")
+    print("The node will continue loading, but TensorRT may not work properly")
 
-import tensorrt
+try:
+    import tensorrt
+except ImportError as e:
+    print(f"[ComfyUI-Upscaler-TensorRT] Error: TensorRT import failed: {e}")
+    print("Please install TensorRT manually:")
+    print("  CUDA 13: pip install tensorrt_cu13==10.15.1.29 tensorrt_cu13_bindings==10.15.1.29 tensorrt_cu13_libs==10.15.1.29")
+    print("  CUDA 12: pip install tensorrt-cu12==10.13.3.9 tensorrt-cu12-libs==10.13.3.9 tensorrt-cu12-bindings==10.13.3.9")
+    print("The node will continue loading, but TensorRT features will not be available")
+    # Create a dummy tensorrt module to prevent further crashes
+    import types
+    tensorrt = types.ModuleType('tensorrt')
+    tensorrt.__version__ = "not installed"
 
 logger = ColoredLogger("ComfyUI-Upscaler-Tensorrt")
+
+# Check if TensorRT is properly loaded
+try:
+    trt_version = tensorrt.__version__
+    if trt_version == "not installed":
+        logger.warning("TensorRT not properly installed - node functionality limited")
+    else:
+        logger.info(f"TensorRT {trt_version} loaded successfully")
+except AttributeError:
+    logger.warning("TensorRT version check failed - may not be properly installed")
 
 IMAGE_DIM_MIN = 256
 IMAGE_DIM_OPT = 512
