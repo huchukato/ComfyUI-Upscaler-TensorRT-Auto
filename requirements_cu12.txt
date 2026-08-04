@@ -7,9 +7,8 @@
 #
 # For CUDA 13, the node will auto-install tensorrt_cu13 packages
 # For CUDA 12, the node will auto-install these tensorrt-cu12 packages
+# CUDA 12 specific TensorRT packages (RTX 30/40 series, CUDA 12.x)
+# NOTE: cuda-toolkit is NOT installed via pip. Install the NVIDIA CUDA Toolkit separately if needed.
 tensorrt-cu12==10.13.3.9
 tensorrt-cu12-libs==10.13.3.9
 tensorrt-cu12-bindings==10.13.3.9
-cuda-toolkit>=12.8.0,<13.0.0
-polygraphy
-requests

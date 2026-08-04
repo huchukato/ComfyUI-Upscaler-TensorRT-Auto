@@ -1,15 +1,18 @@
 #!/bin/bash
 
-# FALLBACK install script for ComfyUI Upscaler TensorRT (Linux/macOS)
-# 
+# FALLBACK install script for ComfyUI Upscaler TensorRT Auto (Linux/macOS)
+#
 # NOTE: This is a BACKUP script - auto-installation is recommended!
-# 
+#
 # PRIMARY METHOD (Recommended):
 # 1. pip install -r requirements.txt
 # 2. Restart ComfyUI
 # 3. Node auto-detects CUDA and installs TensorRT automatically
 #
 # Use this script ONLY if auto-installation fails!
+#
+# The NVIDIA CUDA Toolkit must already be installed on the system.
+# This script installs only the matching TensorRT wheels via pip.
 #
 
 echo "⚠️  FALLBACK INSTALLATION - Use only if auto-installation fails!"
@@ -58,16 +61,16 @@ echo "📦 Installing requirements for CUDA $MAJOR_VERSION..."
 # Install appropriate requirements based on CUDA version
 if [ "$MAJOR_VERSION" = "13" ]; then
     echo "🚀 Installing CUDA 13 requirements (RTX 50 series)"
-    echo "📦 Installing base dependencies + CUDA 13 TensorRT..."
-    python3 -m pip install -r requirements.txt
-    echo "📦 Installing CUDA 13 specific TensorRT packages..."
-    python3 -m pip install -r requirements_cu13.txt
+    echo "Installing base dependencies + CUDA 13 TensorRT..."
+    python3 -m pip install --prefer-binary -r requirements.txt
+    echo "Installing CUDA 13 specific TensorRT packages..."
+    python3 -m pip install --prefer-binary -r requirements_cu13.txt
 elif [ "$MAJOR_VERSION" = "12" ]; then
-    echo "🔧 Installing CUDA 12 requirements (RTX 30/40 series)"
-    echo "📦 Installing base dependencies + CUDA 12 TensorRT..."
-    python3 -m pip install -r requirements.txt
-    echo "📦 Installing CUDA 12 specific TensorRT packages..."
-    python3 -m pip install -r requirements_cu12.txt
+    echo "Installing CUDA 12 requirements (RTX 30/40 series)"
+    echo "Installing base dependencies + CUDA 12 TensorRT..."
+    python3 -m pip install --prefer-binary -r requirements.txt
+    echo "Installing CUDA 12 specific TensorRT packages..."
+    python3 -m pip install --prefer-binary -r requirements_cu12.txt
 else
     echo "❌ Unsupported CUDA version: $CUDA_VERSION"
     echo "Supported versions: CUDA 12.x, CUDA 13.x"

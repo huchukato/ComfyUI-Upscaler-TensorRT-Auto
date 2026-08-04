@@ -11,7 +11,8 @@
 # 1. pip install -r requirements.txt (base dependencies)
 # 2. pip install -r requirements_cu13.txt (CUDA 13 specific TensorRT)
 #
+# CUDA 13 specific TensorRT packages (RTX 50 series, CUDA 13.x)
+# NOTE: cuda-toolkit is NOT installed via pip. Install the NVIDIA CUDA Toolkit separately if needed.
 tensorrt_cu13==10.15.1.29
 tensorrt_cu13_bindings==10.15.1.29
 tensorrt_cu13_libs==10.15.1.29
-cuda-toolkit>=13.0.0,<13.1.0

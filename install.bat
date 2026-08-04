@@ -1,8 +1,10 @@
 @echo off
-REM Auto-install script for ComfyUI Upscaler TensorRT (Windows)
-REM Detects CUDA version and installs appropriate requirements
+REM Auto-install script for ComfyUI Upscaler TensorRT Auto (Windows)
+REM Detects CUDA version and installs only the matching TensorRT wheels.
+REM The NVIDIA CUDA Toolkit must already be installed on the system.
+setlocal EnableDelayedExpansion
 
-echo 🔍 Detecting CUDA version...
+echo Detecting CUDA version...
 
 REM Try nvcc command
 nvcc --version >nul 2>&1
@@ -12,7 +14,7 @@ if %errorlevel% equ 0 (
         set CUDA_VERSION=!CUDA_VERSION:~0,-1!
     )
     if defined CUDA_VERSION (
-        echo ✅ Found CUDA version: !CUDA_VERSION!
+        echo Found CUDA version: !CUDA_VERSION!
     )
 )
 
@@ -25,7 +27,7 @@ if not defined CUDA_VERSION (
                 set CUDA_VERSION=!CUDA_VERSION:~0,-1!
             )
             if defined CUDA_VERSION (
-                echo ✅ Found CUDA version via CUDA_PATH: !CUDA_VERSION!
+                echo Found CUDA version via CUDA_PATH: !CUDA_VERSION!
             )
         )
     )
@@ -40,16 +42,16 @@ if not defined CUDA_VERSION (
                 set CUDA_VERSION=!CUDA_VERSION:~0,-1!
             )
             if defined CUDA_VERSION (
-                echo ✅ Found CUDA version via CUDA_HOME: !CUDA_VERSION!
+                echo Found CUDA version via CUDA_HOME: !CUDA_VERSION!
             )
         )
     )
 )
 
 if not defined CUDA_VERSION (
-    echo ⚠️  Could not detect CUDA version automatically
-    echo Please ensure CUDA is installed and nvcc is in your PATH
-    echo Or set CUDA_PATH or CUDA_HOME environment variables
+    echo Could not detect CUDA version automatically.
+    echo Please ensure the NVIDIA CUDA Toolkit is installed and nvcc is in your PATH,
+    echo or set CUDA_PATH / CUDA_HOME.
     pause
     exit /b 1
 )
@@ -57,25 +59,27 @@ if not defined CUDA_VERSION (
 REM Extract major version
 for /f "tokens=1 delims=." %%i in ("!CUDA_VERSION!") do set MAJOR_VERSION=%%i
 
-echo 📦 Installing requirements for CUDA !MAJOR_VERSION!...
+echo Installing requirements for CUDA !MAJOR_VERSION!...
 
 if "!MAJOR_VERSION!"=="13" (
-    echo 🚀 Using CUDA 13 requirements ^(RTX 50 series^)
-    python -m pip install tensorrt_cu13==10.15.1.29 tensorrt_cu13_bindings==10.15.1.29 tensorrt_cu13_libs==10.15.1.29 "cuda-toolkit>=13.0.0,<13.1.0" polygraphy requests
+    echo Using CUDA 13 TensorRT packages ^(RTX 50 series^)
+    python -m pip install --prefer-binary -r requirements.txt
+    python -m pip install --prefer-binary -r requirements_cu13.txt
 ) else if "!MAJOR_VERSION!"=="12" (
-    echo 🔧 Using CUDA 12 requirements ^(RTX 30/40 series^)
-    python -m pip install tensorrt-cu12==10.13.3.9 tensorrt-cu12-libs==10.13.3.9 tensorrt-cu12-bindings==10.13.3.9 "cuda-toolkit>=12.8.0,<13.0.0" polygraphy requests
+    echo Using CUDA 12 TensorRT packages ^(RTX 30/40 series^)
+    python -m pip install --prefer-binary -r requirements.txt
+    python -m pip install --prefer-binary -r requirements_cu12.txt
 ) else (
-    echo ❌ Unsupported CUDA version: !CUDA_VERSION!
+    echo Unsupported CUDA version: !CUDA_VERSION!
     echo Supported versions: CUDA 12.x, CUDA 13.x
     pause
     exit /b 1
 )
 
 if %errorlevel% equ 0 (
-    echo ✅ Installation completed successfully!
-    echo 🎯 You can now use the ComfyUI Upscaler TensorRT node
+    echo Installation completed successfully!
+    echo You can now use the ComfyUI Upscaler TensorRT Auto node.
 ) else (
-    echo ❌ Installation failed!
+    echo Installation failed!
 )
 pause
