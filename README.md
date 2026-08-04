@@ -93,7 +93,7 @@ If CUDA is not detected, download from: [https://developer.nvidia.com/cuda-13-0-
 ## 🛠️ Supported Models
 
 - These upscaler models have been tested to work with Tensorrt. Onnx are available [here](https://huggingface.co/yuvraj108c/ComfyUI-Upscaler-Onnx/tree/main)
-- The exported tensorrt models support dynamic image resolutions from 256x256 to 1280x1280 px (e.g 960x540, 512x512, 1280x720 etc).
+- The exported tensorrt models support dynamic image resolutions from 256x256 to 2048x2048 px (e.g 960x540, 512x512, 1280x720 etc).
 
    - [4x-AnimeSharp](https://openmodeldb.info/models/4x-AnimeSharp)
    - [4x-UltraSharp](https://openmodeldb.info/models/4x-UltraSharp)
@@ -112,7 +112,7 @@ If CUDA is not detected, download from: [https://developer.nvidia.com/cuda-13-0-
 - Load [example workflow](assets/tensorrt_upscaling_workflow.json) 
 - Choose the appropriate model from the dropdown
 - The tensorrt engine will be built automatically
-- Load an image of resolution between 256-1280px
+- Load an image of resolution between 256-2048px
 - Set `resize_to` to resize the upscaled images to fixed or custom resolutions
 
 ## 🔧 Custom Models

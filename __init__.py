@@ -236,7 +236,7 @@ except AttributeError:
 
 IMAGE_DIM_MIN = 256
 IMAGE_DIM_OPT = 512
-IMAGE_DIM_MAX = 1280
+IMAGE_DIM_MAX = 2048
 
 # --- Function to load configuration ---
 def load_node_config(config_filename="load_upscaler_config.json"):
@@ -307,7 +307,7 @@ class UpscalerTensorrt:
 
         for dim in (H, W):
             if dim > IMAGE_DIM_MAX or dim < IMAGE_DIM_MIN:
-                raise ValueError(f"Input image dimensions fall outside of the supported range: {IMAGE_DIM_MIN} to {IMAGE_DIM_MAX} px!\nImage dimensions: {W}px by {H}px")
+                raise ValueError(f"Input image dimensions fall outside of the supported range: {IMAGE_DIM_MIN}x{IMAGE_DIM_MIN} to {IMAGE_DIM_MAX}x{IMAGE_DIM_MAX} px!\nImage dimensions: {W}px by {H}px")
 
         if resize_to == "custom":
             final_width = kwargs.get("resize_width")
