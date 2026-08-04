@@ -119,7 +119,7 @@ Se CUDA non viene rilevato, scarica da: [https://developer.nvidia.com/cuda-13-0-
 - Carica il [workflow di esempio](assets/tensorrt_upscaling_workflow.json) 
 - Scegli il modello appropriato dal menu a tendina
 - L'engine tensorrt verrà costruito automaticamente
-- Carica un'immagine con risoluzione tra 256-2048px
+- Carica un'immagine con risoluzione tra 256-1280px; input più grandi vengono ridimensionati automaticamente prima dell'upscale
 - Imposta `resize_to` per ridimensionare le immagini upscaled a risoluzioni fisse o personalizzate
 
 ## 🔧 Modelli Personalizzati

@@ -236,7 +236,7 @@ except AttributeError:
 
 IMAGE_DIM_MIN = 256
 IMAGE_DIM_OPT = 512
-IMAGE_DIM_MAX = 2048
+IMAGE_DIM_MAX = 1280
 
 # --- Function to load configuration ---
 def load_node_config(config_filename="load_upscaler_config.json"):
@@ -305,15 +305,37 @@ class UpscalerTensorrt:
         images_bchw = images.permute(0, 3, 1, 2)
         B, C, H, W = images_bchw.shape
 
-        for dim in (H, W):
-            if dim > IMAGE_DIM_MAX or dim < IMAGE_DIM_MIN:
-                raise ValueError(f"Input image dimensions fall outside of the supported range: {IMAGE_DIM_MIN}x{IMAGE_DIM_MIN} to {IMAGE_DIM_MAX}x{IMAGE_DIM_MAX} px!\nImage dimensions: {W}px by {H}px")
-
+        # Compute the desired final resolution using the *original* input dimensions.
         if resize_to == "custom":
             final_width = kwargs.get("resize_width")
             final_height = kwargs.get("resize_height")
         else:
             final_width, final_height = get_final_resolutions(W, H, resize_to)
+
+        # If the input is larger than the TensorRT engine max profile, resize it
+        # down before upscaling. We keep the final target resolution so the output
+        # is still resized to what the user asked for.
+        if H > IMAGE_DIM_MAX or W > IMAGE_DIM_MAX:
+            logger.warning(f"Input {W}x{H} exceeds max engine size {IMAGE_DIM_MAX}; resizing before upscale.")
+            scale = IMAGE_DIM_MAX / max(H, W)
+            new_H = int(H * scale)
+            new_W = int(W * scale)
+            # Ensure dimensions stay within bounds and are multiples of 8 (safe for ESRGAN).
+            new_H = min(new_H, IMAGE_DIM_MAX) // 8 * 8
+            new_W = min(new_W, IMAGE_DIM_MAX) // 8 * 8
+            new_H = max(new_H, IMAGE_DIM_MIN)
+            new_W = max(new_W, IMAGE_DIM_MIN)
+            images_bchw = torch.nn.functional.interpolate(
+                images_bchw,
+                size=(new_H, new_W),
+                mode='bicubic',
+                antialias=True
+            )
+            H, W = new_H, new_W
+
+        for dim in (H, W):
+            if dim > IMAGE_DIM_MAX or dim < IMAGE_DIM_MIN:
+                raise ValueError(f"Input image dimensions fall outside of the supported range: {IMAGE_DIM_MIN}x{IMAGE_DIM_MIN} to {IMAGE_DIM_MAX}x{IMAGE_DIM_MAX} px!\nImage dimensions: {W}px by {H}px")
 
         logger.info(f"Upscaling {B} images from H:{H}, W:{W} to H:{H*4}, W:{W*4} | Final resolution: H:{final_height}, W:{final_width} | resize_to: {resize_to}")
 
