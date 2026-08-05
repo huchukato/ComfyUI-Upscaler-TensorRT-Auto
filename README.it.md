@@ -114,6 +114,16 @@ Se CUDA non viene rilevato, scarica da: [https://developer.nvidia.com/cuda-13-0-
    - [4x_UniversalUpscalerV2-Neutral_115000_swaG](https://openmodeldb.info/models/4x-UniversalUpscalerV2-Neutral)
    - [4x-UltraSharpV2_Lite](https://huggingface.co/Kim2091/UltraSharpV2) 
 
+### 🎬 Consigliati per i Video
+
+Dato che i frame vengono upscalati in modo indipendente, modelli GAN aggressivi come `4x-UltraSharp` o `4x-AnimeSharp` possono introdurre un leggero sfarfallio (flicker) tra un frame e l'altro nei video. Per un risultato più stabile temporalmente, preferisci questi modelli più "morbidi":
+
+   - **RealESRGAN_x4** — sharpening meno aggressivo, la scelta più stabile per video generici
+   - **4xNomos2_otf_esrgan** — addestrato per foto realistiche, output uniforme e stabile
+   - **4x-ClearRealityV1** — modello più leggero, buon compromesso qualità/stabilità
+
+Costruisci l'engine in `fp16` anche per questi: è circa 2 volte più veloce e non introduce flicker percepibile rispetto a `fp32`.
+
 ## ☀️ Utilizzo
 
 - Carica il [workflow di esempio](assets/tensorrt_upscaling_workflow.json) 
