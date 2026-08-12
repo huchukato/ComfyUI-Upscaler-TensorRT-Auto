@@ -30,9 +30,17 @@ def _auto_install_tensorrt():
     installed_marker = node_dir / ".tensorrt_auto_installed"
     failed_marker = node_dir / ".tensorrt_auto_install_failed"
 
-    # Skip if we already installed successfully in a previous run.
+    # Skip if we already installed successfully in a previous run AND tensorrt is importable.
     if installed_marker.exists():
-        return True
+        try:
+            import tensorrt
+            return True
+        except ImportError:
+            print("[ComfyUI-Upscaler-TensorRT] Install marker exists but tensorrt is not importable; retrying.")
+            try:
+                installed_marker.unlink()
+            except Exception:
+                pass
 
     # Avoid retrying too often after a failure (do not block every startup).
     if failed_marker.exists():
@@ -40,6 +48,7 @@ def _auto_install_tensorrt():
             last_fail = failed_marker.stat().st_mtime
             if time.time() - last_fail < 3600:
                 print("[ComfyUI-Upscaler-TensorRT] Recent failed install attempt; skipping auto-install.")
+                print("To retry now, delete the .tensorrt_auto_install_failed marker file or wait 1 hour.")
                 return False
         except Exception:
             pass
@@ -129,7 +138,7 @@ def _auto_install_tensorrt():
                 continue
             print(f"[ComfyUI-Upscaler-TensorRT] Installing from {req_name}...")
             result = subprocess.run(
-                [sys.executable, "-m", "pip", "install", "--prefer-binary", "-r", str(req_file_path)],
+                [sys.executable, "-m", "pip", "install", "--no-input", "--prefer-binary", "-r", str(req_file_path)],
                 capture_output=True
             )
             if result.returncode != 0:
@@ -137,6 +146,10 @@ def _auto_install_tensorrt():
                 print(result.stderr.decode(errors="replace"))
                 failed_marker.touch()
                 return False
+            # Show pip stdout so the user can see progress / warnings.
+            stdout = result.stdout.decode(errors="replace").strip()
+            if stdout:
+                print(stdout)
 
         installed_marker.touch()
         print("[ComfyUI-Upscaler-TensorRT] TensorRT installation completed successfully!")
@@ -193,16 +206,7 @@ def _setup_cuda_dll_path():
 
 # Run auto-install and setup on module import
 try:
-    # Check if other TensorRT nodes are already loaded to avoid conflicts
-    other_trt_nodes = ["ComfyUI-RIFE-TensorRT-Auto"]
-    other_trt_loaded = any(node in sys.modules for node in other_trt_nodes)
-    
-    if other_trt_loaded:
-        print("[ComfyUI-Upscaler-TensorRT] Other TensorRT nodes detected, skipping auto-installation")
-        print("Set DISABLE_TENSORRT_AUTO_INSTALL=true to force auto-installation")
-    else:
-        _auto_install_tensorrt()
-    
+    _auto_install_tensorrt()
     _setup_cuda_dll_path()
 except Exception as e:
     print(f"[ComfyUI-Upscaler-TensorRT] Warning: Auto-installation failed: {e}")
@@ -283,7 +287,7 @@ class UpscalerTensorrt:
             "required": {
                 "images": ("IMAGE", {"tooltip": "Input images for upscaling"}),
                 "upscaler_trt_model": ("UPSCALER_TRT_MODEL", {"tooltip": "Tensorrt model built and loaded"}),
-                "resize_to": (["2x", "3x", "4x", "custom"], {"default": "2x", "tooltip": "Target upscaling factor"}),
+                "resize_to": (["2x", "3x", "4x", "1080p", "2K", "4K", "custom"], {"default": "2x", "tooltip": "Target upscaling factor or fixed resolution preset"}),
             },
             "optional": {
                 "resize_width": ("INT", {"default": 2048, "min": 256, "max": 4096, "step": 8, "tooltip": "Custom width (used when resize_to='custom')"}),

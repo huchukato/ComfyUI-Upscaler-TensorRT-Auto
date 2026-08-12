@@ -109,13 +109,13 @@ def get_final_resolutions(width, height, resize_to):
         case "HD":
             final_width = 1280
             final_height = 720
-        case "FHD":
+        case "FHD" | "1080p":
             final_width = 1920
             final_height = 1080
-        case "2k":
+        case "2k" | "2K":
             final_width = 2560
             final_height = 1440
-        case "4k":
+        case "4k" | "4K":
             final_width = 3840
             final_height = 2160
         case "none":
@@ -130,7 +130,7 @@ def get_final_resolutions(width, height, resize_to):
     if aspect_ratio == 1.0:
         final_width = final_height
 
-    if aspect_ratio < 1.0 and resize_to not in ("none", "1x", "1.5x", "2x", "2.5x", "3x", "3.5x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"):
+    if aspect_ratio < 1.0 and resize_to not in ("none", "1x", "1.5x", "2x", "2.5x", "3x", "3.5x", "4x", "5x", "6x", "7x", "8x", "9x", "10x", "HD", "FHD", "1080p", "2k", "2K", "4k", "4K"):
         temp = final_width
         final_width = final_height
         final_height = temp
