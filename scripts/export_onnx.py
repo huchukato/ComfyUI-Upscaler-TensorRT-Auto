@@ -5,13 +5,14 @@ import torch
 import folder_paths
 from spandrel import ModelLoader, ImageModelDescriptor
 
-model_name = "4xNomos2_otf_esrgan.pth"
-onnx_save_path = "./4xNomos2_otf_esrgan.onnx"
+model_name = "2xLexicaRRDBNet_Sharp.pth"
+onnx_save_path = "./2xLexicaRRDBNet_Sharp.onnx"
+scale = 2  # 2x model
 
 model_path = folder_paths.get_full_path_or_raise("upscale_models", model_name)
 model = ModelLoader().load_from_file(model_path).model.eval().cuda()
 
-# Check dynamic shapes for esrgan 4x model
+# Check dynamic shapes for esrgan model
 def supports_dynamic_shapes_esrgan(model, scale=4):
 
     input_shapes = [
@@ -49,7 +50,7 @@ def supports_dynamic_shapes_esrgan(model, scale=4):
     return all_passed
 
 # Use smaller dummy input if model supports
-if supports_dynamic_shapes_esrgan(model):
+if supports_dynamic_shapes_esrgan(model, scale=scale):
     shape = (1, 3, 64, 64)
     print(f"Using {shape} input (less VRAM usage)")
 else:
