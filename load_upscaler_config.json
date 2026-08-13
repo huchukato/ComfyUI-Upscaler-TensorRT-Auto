@@ -1,6 +1,7 @@
 {
   "model": {
     "options": [
+      "2xLexicaRRDBNet_Sharp",
       "4x-AnimeSharp",
       "4x-UltraSharp",
       "4x-WTP-UDS-Esrgan",  
