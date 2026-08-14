@@ -129,7 +129,7 @@ Costruisci l'engine in `fp16` anche per questi: è circa 2 volte più veloce e n
 - Carica il [workflow di esempio](assets/tensorrt_upscaling_workflow.json) 
 - Scegli il modello appropriato dal menu a tendina
 - L'engine tensorrt verrà costruito automaticamente
-- Carica un'immagine con risoluzione tra 256-1280px; input più grandi vengono ridimensionati automaticamente prima dell'upscale
+- Carica un'immagine con risoluzione tra 256-2048px; input più grandi vengono ridimensionati automaticamente prima dell'upscale
 - Imposta `resize_to` per ridimensionare le immagini upscaled a una risoluzione fissa o personalizzata:
   - `2x` / `3x` / `4x` — scala l'input di un fattore fisso
   - `1080p` (1920×1080), `2K` (2560×1440), `4K` (3840×2160) — punta a una risoluzione standard, mantenendo l'aspect ratio

@@ -240,7 +240,7 @@ except AttributeError:
 
 IMAGE_DIM_MIN = 256
 IMAGE_DIM_OPT = 512
-IMAGE_DIM_MAX = 1280
+IMAGE_DIM_MAX = 2048
 
 # --- Function to load configuration ---
 def load_node_config(config_filename="load_upscaler_config.json"):

@@ -45,7 +45,7 @@ def export_trt(trt_path=None, onnx_path=None, use_fp16=True):
         use_fp16,
         enable_preview=True,
         input_profile=[
-            {"input": [(1,3,256,256), (1,3,512,512), (1,3,1280,1280)]}, # any sizes from 256x256 to 1280x1280
+            {"input": [(1,3,256,256), (1,3,1024,1024), (1,3,2048,2048)]}, # any sizes from 256x256 to 2048x2048
         ],
         )
 
