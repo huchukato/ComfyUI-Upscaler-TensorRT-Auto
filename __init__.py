@@ -288,7 +288,6 @@ class UpscalerTensorrt:
                 "images": ("IMAGE", {"tooltip": "Input images for upscaling"}),
                 "upscaler_trt_model": ("UPSCALER_TRT_MODEL", {"tooltip": "Tensorrt model built and loaded"}),
                 "resize_to": (["2x", "3x", "4x", "1080p", "2K", "4K", "custom"], {"default": "2x", "tooltip": "Target upscaling factor or fixed resolution preset"}),
-                "scale": (["2", "4"], {"default": "4", "tooltip": "Upscaler model scale factor (2 for 2x models, 4 for 4x models)"}),
                 "batch_size": ("INT", {"default": 1, "min": 1, "max": 16, "step": 1,
                                        "tooltip": "Number of images per GPU call. "
                                                   "Higher values improve throughput but use more VRAM. "
@@ -311,7 +310,8 @@ class UpscalerTensorrt:
         images = kwargs.get("images")
         upscaler_trt_model = kwargs.get("upscaler_trt_model")
         resize_to = kwargs.get("resize_to")
-        upscale_factor = int(kwargs.get("scale", "4"))
+        # Auto-detect upscale factor from the engine filename stored on the model object
+        upscale_factor = getattr(upscaler_trt_model, "_upscale_factor", 4)
         batch_size = max(1, int(kwargs.get("batch_size", 1)))
 
         images_bchw = images.permute(0, 3, 1, 2)
@@ -433,6 +433,16 @@ class LoadUpscalerTensorrtModel:
         os.makedirs(onnx_models_dir, exist_ok=True)
 
         onnx_model_path = os.path.join(onnx_models_dir, f"{model}.onnx")
+
+        # Auto-detect upscale factor from model name
+        model_lower = model.lower()
+        if model_lower.startswith("2x") or "x2plus" in model_lower or "x2" in model_lower:
+            upscale_factor = 2
+        elif model_lower.startswith("4x") or "x4plus" in model_lower or "x4" in model_lower:
+            upscale_factor = 4
+        else:
+            upscale_factor = 4  # default to 4x for unknown models
+        logger.info(f"Auto-detected upscale factor: {upscale_factor}x for model '{model}'")
         
         engine_channel = 3
         engine_min_batch = 1
@@ -475,6 +485,9 @@ class LoadUpscalerTensorrtModel:
         mm.soft_empty_cache()
         engine = Engine(tensorrt_model_path)
         engine.load()
+
+        # Attach upscale factor so the runner node can auto-detect it
+        engine._upscale_factor = upscale_factor
 
         return (engine,)
 
