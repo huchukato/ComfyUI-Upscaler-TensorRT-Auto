@@ -475,7 +475,7 @@ class LoadUpscalerTensorrtModel:
                 onnx_path=onnx_model_path,
                 fp16= True if precision == "fp16" else False,
                 input_profile=[
-                    {"input": [(engine_min_batch,engine_channel,engine_min_h,engine_min_w), (engine_opt_batch,engine_channel,engine_opt_h,engine_min_w), (engine_max_batch,engine_channel,engine_max_h,engine_max_w)]},
+                    {"input": [(engine_min_batch,engine_channel,engine_min_h,engine_min_w), (engine_opt_batch,engine_channel,engine_opt_h,engine_opt_w), (engine_max_batch,engine_channel,engine_max_h,engine_max_w)]},
                 ],
             )
             e = time.time()
