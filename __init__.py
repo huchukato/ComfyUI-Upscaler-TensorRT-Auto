@@ -289,6 +289,11 @@ class UpscalerTensorrt:
                 "upscaler_trt_model": ("UPSCALER_TRT_MODEL", {"tooltip": "Tensorrt model built and loaded"}),
                 "resize_to": (["2x", "3x", "4x", "1080p", "2K", "4K", "custom"], {"default": "2x", "tooltip": "Target upscaling factor or fixed resolution preset"}),
                 "scale": (["2", "4"], {"default": "4", "tooltip": "Upscaler model scale factor (2 for 2x models, 4 for 4x models)"}),
+                "batch_size": ("INT", {"default": 1, "min": 1, "max": 16, "step": 1,
+                                       "tooltip": "Number of images per GPU call. "
+                                                  "Higher values improve throughput but use more VRAM. "
+                                                  "Must be <= the batch_size used when building the engine. "
+                                                  "Set to 1 for the safest behaviour."}),
             },
             "optional": {
                 "resize_width": ("INT", {"default": 2048, "min": 256, "max": 4096, "step": 8, "tooltip": "Custom width (used when resize_to='custom')"}),
@@ -307,6 +312,7 @@ class UpscalerTensorrt:
         upscaler_trt_model = kwargs.get("upscaler_trt_model")
         resize_to = kwargs.get("resize_to")
         upscale_factor = int(kwargs.get("scale", "4"))
+        batch_size = max(1, int(kwargs.get("batch_size", 1)))
 
         images_bchw = images.permute(0, 3, 1, 2)
         B, C, H, W = images_bchw.shape
@@ -343,35 +349,39 @@ class UpscalerTensorrt:
             if dim > IMAGE_DIM_MAX or dim < IMAGE_DIM_MIN:
                 raise ValueError(f"Input image dimensions fall outside of the supported range: {IMAGE_DIM_MIN}x{IMAGE_DIM_MIN} to {IMAGE_DIM_MAX}x{IMAGE_DIM_MAX} px!\nImage dimensions: {W}px by {H}px")
 
-        logger.info(f"Upscaling {B} images from H:{H}, W:{W} to H:{H*upscale_factor}, W:{W*upscale_factor} | Final resolution: H:{final_height}, W:{final_width} | resize_to: {resize_to} | scale: {upscale_factor}x")
+        logger.info(f"Upscaling {B} images from H:{H}, W:{W} to H:{H*upscale_factor}, W:{W*upscale_factor} | Final resolution: H:{final_height}, W:{final_width} | resize_to: {resize_to} | scale: {upscale_factor}x | batch_size: {batch_size}")
 
-        shape_dict = {
-            "input": {"shape": (1, 3, H, W)},
-            "output": {"shape": (1, 3, H*upscale_factor, W*upscale_factor)},
-        }
         upscaler_trt_model.activate()
-        upscaler_trt_model.allocate_buffers(shape_dict=shape_dict)
-
         cudaStream = torch.cuda.current_stream().cuda_stream
         pbar = ProgressBar(B)
-        images_list = list(torch.split(images_bchw, split_size_or_sections=1))
 
         upscaled_frames = torch.empty((B, C, final_height, final_width), dtype=torch.float32, device=mm.intermediate_device())
         must_resize = W*upscale_factor != final_width or H*upscale_factor != final_height
 
-        for i, img in enumerate(images_list):
-            result = upscaler_trt_model.infer({"input": img}, cudaStream)
+        # Process in batches of batch_size
+        for start_idx in range(0, B, batch_size):
+            end_idx = min(start_idx + batch_size, B)
+            current_batch_size = end_idx - start_idx
+            batch = images_bchw[start_idx:end_idx]
+
+            shape_dict = {
+                "input": {"shape": (current_batch_size, 3, H, W)},
+                "output": {"shape": (current_batch_size, 3, H*upscale_factor, W*upscale_factor)},
+            }
+            upscaler_trt_model.allocate_buffers(shape_dict=shape_dict)
+
+            result = upscaler_trt_model.infer({"input": batch}, cudaStream)
             result = result["output"]
 
             if must_resize:
                 result = torch.nn.functional.interpolate(
-                    result, 
+                    result,
                     size=(final_height, final_width),
                     mode='bicubic',
                     antialias=True
                 )
-            upscaled_frames[i] = result.to(mm.intermediate_device())
-            pbar.update(1)
+            upscaled_frames[start_idx:end_idx] = result.to(mm.intermediate_device())
+            pbar.update_absolute(end_idx)
 
         output = upscaled_frames.permute(0, 2, 3, 1)
         upscaler_trt_model.reset()
@@ -400,6 +410,11 @@ class LoadUpscalerTensorrtModel:
             "required": {
                 "model": (model_options, {"default": model_default, "tooltip": model_tooltip}),
                 "precision": (precision_options, {"default": precision_default, "tooltip": precision_tooltip}),
+                "batch_size": ("INT", {"default": 1, "min": 1, "max": 16, "step": 1,
+                                       "tooltip": "Max batch size for the engine profile. "
+                                                  "Higher values allow batched inference (multiple images per GPU call) "
+                                                  "for better throughput, but use more VRAM and require a rebuild. "
+                                                  "Set to 1 for the original behaviour."}),
             }
         }
     
@@ -410,7 +425,7 @@ class LoadUpscalerTensorrtModel:
     DESCRIPTION = "Load tensorrt models, they will be built automatically if not found."
     FUNCTION = "load_upscaler_tensorrt_model" # This is the correct one
     
-    def load_upscaler_tensorrt_model(self, model, precision):
+    def load_upscaler_tensorrt_model(self, model, precision, batch_size=1):
         tensorrt_models_dir = os.path.join(folder_paths.models_dir, "tensorrt", "upscaler")
         onnx_models_dir = os.path.join(folder_paths.models_dir, "onnx")
 
@@ -420,7 +435,9 @@ class LoadUpscalerTensorrtModel:
         onnx_model_path = os.path.join(onnx_models_dir, f"{model}.onnx")
         
         engine_channel = 3
-        engine_min_batch, engine_opt_batch, engine_max_batch = 1, 1, 1
+        engine_min_batch = 1
+        engine_opt_batch = max(1, batch_size)
+        engine_max_batch = max(1, batch_size)
         engine_min_h, engine_opt_h, engine_max_h = IMAGE_DIM_MIN, IMAGE_DIM_OPT, IMAGE_DIM_MAX
         engine_min_w, engine_opt_w, engine_max_w = IMAGE_DIM_MIN, IMAGE_DIM_OPT, IMAGE_DIM_MAX
         tensorrt_model_path = os.path.join(tensorrt_models_dir, f"{model}_{precision}_{engine_min_batch}x{engine_channel}x{engine_min_h}x{engine_min_w}_{engine_opt_batch}x{engine_channel}x{engine_opt_h}x{engine_opt_w}_{engine_max_batch}x{engine_channel}x{engine_max_h}x{engine_max_w}_{tensorrt.__version__}.trt")
