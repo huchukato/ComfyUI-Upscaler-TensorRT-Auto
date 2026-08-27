@@ -477,6 +477,7 @@ class LoadUpscalerTensorrtModel:
                 input_profile=[
                     {"input": [(engine_min_batch,engine_channel,engine_min_h,engine_min_w), (engine_opt_batch,engine_channel,engine_opt_h,engine_opt_w), (engine_max_batch,engine_channel,engine_max_h,engine_max_w)]},
                 ],
+                enable_all_tactics=True,
             )
             e = time.time()
             logger.info(f"Time taken to build: {(e-s)} seconds")
