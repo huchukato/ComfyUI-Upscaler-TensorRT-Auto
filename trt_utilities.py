@@ -353,6 +353,15 @@ class Engine:
             config.set_flag(trt_instance.BuilderFlag.FP16) if fp16 else None
             config.set_flag(trt_instance.BuilderFlag.REFIT) if enable_refit else None
 
+            # Blackwell (sm_120) workaround: TensorRT 10.15 Myelin compiler
+            # fails to find tactics for some Conv layers at opt level 3+.
+            # Setting builder_optimization_level=0 disables fusion-heavy
+            # optimizations that trigger the bug.
+            try:
+                config.set_optimization_level(0)
+            except Exception:
+                pass  # older TRT versions don't have this API
+
             profiles = copy.deepcopy(p)
             for profile in profiles:
                 # Last profile is used for set_calibration_profile.
