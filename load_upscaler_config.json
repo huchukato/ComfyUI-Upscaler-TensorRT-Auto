@@ -6,17 +6,7 @@
       "2xLexicaRRDBNet",
       "2xLexicaRRDBNet_Sharp",
       "RealESRGAN_x2plus",
-      "4x-UltraSharp",
-      "4x-AnimeSharp",
-      "4x-WTP-UDS-Esrgan",
-      "4x_NMKD-Siax_200k",
-      "4x_RealisticRescaler_100000_G",
-      "4x_foolhardy_Remacri",
-      "RealESRGAN_x4",
-      "4xNomos2_otf_esrgan",
-      "4x_UniversalUpscalerV2-Neutral_115000_swaG",
-      "4x-ClearRealityV1",
-      "4x-UltraSharpV2_Lite"
+      "4x-UltraSharp"
     ],
     "default": "4x-UltraSharp",
     "tooltip": "These models have been tested with tensorrt. Loaded from config."
