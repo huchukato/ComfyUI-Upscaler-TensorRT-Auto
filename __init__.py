@@ -454,8 +454,8 @@ class LoadUpscalerTensorrtModel:
 
         if not os.path.exists(tensorrt_model_path):
             if not os.path.exists(onnx_model_path):
-                # Try huchukato/favs first, then fallback to yuvraj108c
-                onnx_model_download_url = f"https://huggingface.co/huchukato/favs/resolve/main/ESRGAN/{model}.onnx"
+                # Try huchukato/favs/onnx first (dynamic shapes), then fallback to yuvraj108c
+                onnx_model_download_url = f"https://huggingface.co/huchukato/favs/resolve/main/onnx/{model}.onnx"
                 logger.info(f"Downloading {onnx_model_download_url}")
                 try:
                     download_file(url=onnx_model_download_url, save_path=onnx_model_path)

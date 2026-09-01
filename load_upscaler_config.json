@@ -3,10 +3,11 @@
     "options": [
       "2x-CGIMaster-v1",
       "2x-AnimeSharpV3",
+      "2xLexicaRRDBNet",
       "2xLexicaRRDBNet_Sharp",
       "RealESRGAN_x2plus",
-      "4x-AnimeSharp",
       "4x-UltraSharp",
+      "4x-AnimeSharp",
       "4x-WTP-UDS-Esrgan",
       "4x_NMKD-Siax_200k",
       "4x_RealisticRescaler_100000_G",
