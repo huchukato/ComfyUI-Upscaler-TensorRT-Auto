@@ -6,9 +6,13 @@
       "2xLexicaRRDBNet",
       "2xLexicaRRDBNet_Sharp",
       "RealESRGAN_x2plus",
-      "4x-UltraSharp"
+      "4xUltrasharp_4xUltrasharpV10",
+      "4x-AnimeSharp",
+      "4xNomos2_hq_dat2",
+      "4xLSDIRplusC",
+      "RealESRGAN_x4plus"
     ],
-    "default": "4x-UltraSharp",
+    "default": "4xUltrasharp_4xUltrasharpV10",
     "tooltip": "These models have been tested with tensorrt. Loaded from config."
   },
   "precision": {
