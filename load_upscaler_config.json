@@ -9,8 +9,11 @@
       "4xUltrasharp_4xUltrasharpV10",
       "4x-AnimeSharp",
       "4xNomos2_hq_dat2",
+      "4xNomos2_otf_esrgan",
       "4xLSDIRplusC",
-      "RealESRGAN_x4plus"
+      "RealESRGAN_x4plus",
+      "RealESRGAN_x4plus_anime_6B",
+      "realesrgan-x4minus"
     ],
     "default": "4xUltrasharp_4xUltrasharpV10",
     "tooltip": "These models have been tested with tensorrt. Loaded from config."
