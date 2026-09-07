@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="https://raw.githubusercontent.com/huchukato/ComfyUI-Upscaler-TensorRT-Auto/master/banner.png" alt="Auto TensorRT Upscaler Banner" width="100%" />
+
 # ComfyUI Upscaler TensorRT ⚡
 
 [![python](https://img.shields.io/badge/python-3.12.3-green)](https://www.python.org/downloads/release/python-3123//)
