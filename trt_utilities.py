@@ -357,10 +357,8 @@ class Engine:
             # fails to find tactics for some Conv layers at opt level 3+.
             # Setting builder_optimization_level=0 disables fusion-heavy
             # optimizations that trigger the bug.
-            try:
-                config.set_optimization_level(0)
-            except Exception:
-                pass  # older TRT versions don't have this API
+            if hasattr(config, "builder_optimization_level"):
+                config.builder_optimization_level = 0
 
             profiles = copy.deepcopy(p)
             for profile in profiles:
