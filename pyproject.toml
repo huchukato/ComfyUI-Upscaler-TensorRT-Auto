@@ -1,5 +1,5 @@
 [project]
-name = "upscaler-tensorrt-auto"
+name = "Auto-TensorRT-Upscaler"
 version = "1.1.0"
 description = "ComfyUI custom node for fast image upscaling with automatic CUDA/TensorRT detection"
 license = { file = "LICENSE" }
@@ -14,5 +14,7 @@ dependencies = { file = ["requirements.txt"] }
 
 [tool.comfy]
 PublisherId = "huchukato"
-DisplayName = "Upscaler TensorRT Auto"
-Icon = ""
+DisplayName = "Auto TensorRT Upscaler"
+Icon = "https://raw.githubusercontent.com/huchukato/ComfyUI-Upscaler-TensorRT-Auto/master/icon.png"
+Banner = "https://raw.githubusercontent.com/huchukato/ComfyUI-Upscaler-TensorRT-Auto/master/banner.png"
+requires-comfyui = ">=1.0.0"
