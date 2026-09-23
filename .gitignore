@@ -2,3 +2,6 @@ __pycache__2xLexicaRRDBNet_Sharp.pth
 __pycache__/
 *.pth
 .DS_Store
+
+# Local caches / Devin local config
+.ruff_cache/
