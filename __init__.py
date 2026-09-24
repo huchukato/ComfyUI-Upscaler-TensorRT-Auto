@@ -450,7 +450,16 @@ class LoadUpscalerTensorrtModel:
         engine_max_batch = max(1, batch_size)
         engine_min_h, engine_opt_h, engine_max_h = IMAGE_DIM_MIN, IMAGE_DIM_OPT, IMAGE_DIM_MAX
         engine_min_w, engine_opt_w, engine_max_w = IMAGE_DIM_MIN, IMAGE_DIM_OPT, IMAGE_DIM_MAX
-        tensorrt_model_path = os.path.join(tensorrt_models_dir, f"{model}_{precision}_{engine_min_batch}x{engine_channel}x{engine_min_h}x{engine_min_w}_{engine_opt_batch}x{engine_channel}x{engine_opt_h}x{engine_opt_w}_{engine_max_batch}x{engine_channel}x{engine_max_h}x{engine_max_w}_{tensorrt.__version__}.trt")
+        def engine_path_for(prec):
+            return os.path.join(tensorrt_models_dir, f"{model}_{prec}_{engine_min_batch}x{engine_channel}x{engine_min_h}x{engine_min_w}_{engine_opt_batch}x{engine_channel}x{engine_opt_h}x{engine_opt_w}_{engine_max_batch}x{engine_channel}x{engine_max_h}x{engine_max_w}_{tensorrt.__version__}.trt")
+
+        tensorrt_model_path = engine_path_for(precision)
+        if not os.path.exists(tensorrt_model_path) and precision == "fp16":
+            fp32_path = engine_path_for("fp32")
+            if os.path.exists(fp32_path):
+                # Reuse an already-built fp32 engine when the fp16 one is missing.
+                tensorrt_model_path = fp32_path
+                precision = "fp32"
 
         if not os.path.exists(tensorrt_model_path):
             if not os.path.exists(onnx_model_path):
@@ -467,18 +476,37 @@ class LoadUpscalerTensorrtModel:
             else:
                 logger.info(f"Onnx model found at: {onnx_model_path}")
 
-            logger.info(f"Building TensorRT engine for {onnx_model_path}: {tensorrt_model_path}")
-            mm.soft_empty_cache()
             s = time.time()
-            engine = Engine(tensorrt_model_path)
-            engine.build(
-                onnx_path=onnx_model_path,
-                fp16= True if precision == "fp16" else False,
-                input_profile=[
-                    {"input": [(engine_min_batch,engine_channel,engine_min_h,engine_min_w), (engine_opt_batch,engine_channel,engine_opt_h,engine_opt_w), (engine_max_batch,engine_channel,engine_max_h,engine_max_w)]},
-                ],
-                enable_all_tactics=True,
-            )
+            build_precisions = [precision] if precision != "fp16" else ["fp16", "fp32"]
+            built = False
+            for prec in build_precisions:
+                path = engine_path_for(prec)
+                logger.info(f"Building TensorRT engine for {onnx_model_path}: {path}")
+                mm.soft_empty_cache()
+                engine = Engine(path)
+                try:
+                    engine.build(
+                        onnx_path=onnx_model_path,
+                        fp16=(prec == "fp16"),
+                        input_profile=[
+                            {"input": [(engine_min_batch,engine_channel,engine_min_h,engine_min_w), (engine_opt_batch,engine_channel,engine_opt_h,engine_opt_w), (engine_max_batch,engine_channel,engine_max_h,engine_max_w)]},
+                        ],
+                        enable_all_tactics=True,
+                    )
+                except Exception as build_err:
+                    # Remove any partial/corrupt engine file so the next run
+                    # doesn't try to load it.
+                    if os.path.exists(path):
+                        os.remove(path)
+                    if prec != build_precisions[-1]:
+                        logger.warning(f"{prec} engine build failed ({build_err}); retrying with {build_precisions[-1]}")
+                        continue
+                    raise
+                tensorrt_model_path = path
+                built = True
+                break
+            if not built:
+                raise RuntimeError("TensorRT engine build failed")
             e = time.time()
             logger.info(f"Time taken to build: {(e-s)} seconds")
 
