@@ -68,7 +68,7 @@ def _auto_install_tensorrt():
 
         # Try nvcc command
         try:
-            result = subprocess.run("nvcc --version", shell=True, capture_output=True, text=True)
+            result = subprocess.run(["nvcc", "--version"], capture_output=True, text=True)
             if result.returncode == 0:
                 match = re.search(r"release (\d+\.\d+)", result.stdout)
                 if match:
@@ -82,7 +82,7 @@ def _auto_install_tensorrt():
             nvcc_path = os.path.join(os.environ["CUDA_PATH"], "bin", "nvcc")
             if os.path.exists(nvcc_path):
                 try:
-                    result = subprocess.run(f'"{nvcc_path}" --version', shell=True, capture_output=True, text=True)
+                    result = subprocess.run([nvcc_path, "--version"], capture_output=True, text=True)
                     if result.returncode == 0:
                         match = re.search(r"release (\d+\.\d+)", result.stdout)
                         if match:
@@ -96,7 +96,7 @@ def _auto_install_tensorrt():
             nvcc_path = os.path.join(os.environ["CUDA_HOME"], "bin", "nvcc")
             if os.path.exists(nvcc_path):
                 try:
-                    result = subprocess.run(f'"{nvcc_path}" --version', shell=True, capture_output=True, text=True)
+                    result = subprocess.run([nvcc_path, "--version"], capture_output=True, text=True)
                     if result.returncode == 0:
                         match = re.search(r"release (\d+\.\d+)", result.stdout)
                         if match:

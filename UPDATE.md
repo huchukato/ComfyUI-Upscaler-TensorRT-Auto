@@ -1,5 +1,9 @@
 # Update Log
 
+## Version 1.1.2
+
+- CUDA detection now invokes `nvcc --version` via argv lists instead of `shell=True` (registry `python_command_injection_risk` false positive; also general hardening).
+
 ## Version 1.1.1
 
 - Fixed engine build failure on Blackwell (SM120) GPUs: when the fp16 Myelin tactic search fails (`No conv tactic found` / `Invalid Engine`, e.g. on 4xUltrasharp with TensorRT 10.15), the builder now deletes the partial engine and automatically retries in fp32. An existing fp32 engine is reused on subsequent runs. Manual workaround (setting `precision=fp32` in the node) is no longer needed.
