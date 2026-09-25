@@ -1,6 +1,6 @@
 [project]
 name = "Auto-TensorRT-Upscaler"
-version = "1.1.3"
+version = "1.1.4"
 description = "Fast image upscaling for ComfyUI using TensorRT acceleration (2-4x faster than standard methods). Auto-detects CUDA version and installs matching TensorRT wheels. Supports multiple upscaling models with automatic engine building and optimized inference for NVIDIA GPUs."
 license = { file = "LICENSE" }
 requires-python = ">=3.9"

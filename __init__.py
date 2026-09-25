@@ -68,12 +68,11 @@ def _auto_install_tensorrt():
 
         # Try nvcc command
         try:
-            result = subprocess.run(["nvcc", "--version"], capture_output=True, text=True)
-            if result.returncode == 0:
-                match = re.search(r"release (\d+\.\d+)", result.stdout)
-                if match:
-                    cuda_version = match.group(1)
-                    print(f"[ComfyUI-Upscaler-TensorRT] Detected CUDA version: {cuda_version}")
+            stdout = subprocess.check_output(["nvcc", "--version"], text=True)
+            match = re.search(r"release (\d+\.\d+)", stdout)
+            if match:
+                cuda_version = match.group(1)
+                print(f"[ComfyUI-Upscaler-TensorRT] Detected CUDA version: {cuda_version}")
         except Exception:
             pass
 
@@ -82,12 +81,11 @@ def _auto_install_tensorrt():
             nvcc_path = os.path.join(os.environ["CUDA_PATH"], "bin", "nvcc")
             if os.path.exists(nvcc_path):
                 try:
-                    result = subprocess.run([nvcc_path, "--version"], capture_output=True, text=True)
-                    if result.returncode == 0:
-                        match = re.search(r"release (\d+\.\d+)", result.stdout)
-                        if match:
-                            cuda_version = match.group(1)
-                            print(f"[ComfyUI-Upscaler-TensorRT] Detected CUDA via CUDA_PATH: {cuda_version}")
+                    stdout = subprocess.check_output([nvcc_path, "--version"], text=True)
+                    match = re.search(r"release (\d+\.\d+)", stdout)
+                    if match:
+                        cuda_version = match.group(1)
+                        print(f"[ComfyUI-Upscaler-TensorRT] Detected CUDA via CUDA_PATH: {cuda_version}")
                 except Exception:
                     pass
 
@@ -96,12 +94,11 @@ def _auto_install_tensorrt():
             nvcc_path = os.path.join(os.environ["CUDA_HOME"], "bin", "nvcc")
             if os.path.exists(nvcc_path):
                 try:
-                    result = subprocess.run([nvcc_path, "--version"], capture_output=True, text=True)
-                    if result.returncode == 0:
-                        match = re.search(r"release (\d+\.\d+)", result.stdout)
-                        if match:
-                            cuda_version = match.group(1)
-                            print(f"[ComfyUI-Upscaler-TensorRT] Detected CUDA via CUDA_HOME: {cuda_version}")
+                    stdout = subprocess.check_output([nvcc_path, "--version"], text=True)
+                    match = re.search(r"release (\d+\.\d+)", stdout)
+                    if match:
+                        cuda_version = match.group(1)
+                        print(f"[ComfyUI-Upscaler-TensorRT] Detected CUDA via CUDA_HOME: {cuda_version}")
                 except Exception:
                     pass
 
@@ -137,17 +134,18 @@ def _auto_install_tensorrt():
             if not req_file_path.exists():
                 continue
             print(f"[ComfyUI-Upscaler-TensorRT] Installing from {req_name}...")
-            result = subprocess.run(
-                [sys.executable, "-m", "pip", "install", "--no-input", "--prefer-binary", "-r", str(req_file_path)],
-                capture_output=True
-            )
-            if result.returncode != 0:
+            try:
+                pip_out = subprocess.check_output(
+                    [sys.executable, "-m", "pip", "install", "--no-input", "--prefer-binary", "-r", str(req_file_path)],
+                    stderr=subprocess.STDOUT
+                )
+            except subprocess.CalledProcessError as e:
                 print(f"[ComfyUI-Upscaler-TensorRT] Failed to install {req_name}")
-                print(result.stderr.decode(errors="replace"))
+                print(e.output.decode(errors="replace"))
                 failed_marker.touch()
                 return False
             # Show pip stdout so the user can see progress / warnings.
-            stdout = result.stdout.decode(errors="replace").strip()
+            stdout = pip_out.decode(errors="replace").strip()
             if stdout:
                 print(stdout)
 
