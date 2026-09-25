@@ -21,7 +21,7 @@ def _auto_install_tensorrt():
     This function installs only the TensorRT packages via pip.
     A marker file prevents repeated install attempts on every ComfyUI startup.
     """
-    disable_auto_install = os.environ.get("DISABLE_TENSORRT_AUTO_INSTALL", "false").lower() == "true"
+    disable_auto_install = os.getenv("DISABLE_TENSORRT_AUTO_INSTALL", "false").lower() == "true"
     if disable_auto_install:
         print("[ComfyUI-Upscaler-TensorRT] Auto-installation disabled via DISABLE_TENSORRT_AUTO_INSTALL")
         return True
@@ -77,8 +77,8 @@ def _auto_install_tensorrt():
             pass
 
         # Try CUDA_PATH
-        if not cuda_version and os.environ.get("CUDA_PATH"):
-            nvcc_path = os.path.join(os.environ["CUDA_PATH"], "bin", "nvcc")
+        if not cuda_version and os.getenv("CUDA_PATH"):
+            nvcc_path = os.path.join(os.getenv("CUDA_PATH"), "bin", "nvcc")
             if os.path.exists(nvcc_path):
                 try:
                     stdout = subprocess.check_output([nvcc_path, "--version"], text=True)
@@ -90,8 +90,8 @@ def _auto_install_tensorrt():
                     pass
 
         # Try CUDA_HOME
-        if not cuda_version and os.environ.get("CUDA_HOME"):
-            nvcc_path = os.path.join(os.environ["CUDA_HOME"], "bin", "nvcc")
+        if not cuda_version and os.getenv("CUDA_HOME"):
+            nvcc_path = os.path.join(os.getenv("CUDA_HOME"), "bin", "nvcc")
             if os.path.exists(nvcc_path):
                 try:
                     stdout = subprocess.check_output([nvcc_path, "--version"], text=True)
@@ -171,11 +171,11 @@ def _setup_cuda_dll_path():
     cuda_root = None
     
     # Check for CUDA_PATH or CUDA_HOME environment variables
-    cuda_root = os.environ.get("CUDA_PATH") or os.environ.get("CUDA_HOME")
+    cuda_root = os.getenv("CUDA_PATH") or os.getenv("CUDA_HOME")
     
     if not cuda_root:
         # Try default Windows install location
-        program_files = os.environ.get("PROGRAMFILES")
+        program_files = os.getenv("PROGRAMFILES")
         if program_files:
             cuda_base = Path(program_files) / "NVIDIA GPU Computing Toolkit" / "CUDA"
             if cuda_base.exists():
