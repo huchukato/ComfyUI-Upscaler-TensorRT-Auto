@@ -7,7 +7,12 @@ import folder_paths
 import numpy as np
 import torch
 from comfy.utils import ProgressBar
-from .trt_utilities import Engine
+try:
+    from .trt_utilities import Engine
+except Exception as _trt_utils_err:
+    Engine = None
+    print(f"[ComfyUI-Upscaler-TensorRT] trt utilities not importable ({_trt_utils_err}); "
+          "run 'pip install -r requirements.txt' in this folder and restart ComfyUI.")
 from .utilities import download_file, ColoredLogger, get_final_resolutions
 import comfy.model_management as mm
 import time
@@ -459,6 +464,9 @@ class LoadUpscalerTensorrtModel:
                 tensorrt_model_path = fp32_path
                 precision = "fp32"
 
+        if Engine is None:
+            raise RuntimeError("[ComfyUI-Upscaler-TensorRT] TensorRT utilities are not importable — run "
+                               "install.py (Windows: install.bat) in the node folder, then restart ComfyUI.")
         if not os.path.exists(tensorrt_model_path):
             if not os.path.exists(onnx_model_path):
                 # Try huchukato/garage/onnx/upscale first (dynamic shapes), then fallback to yuvraj108c

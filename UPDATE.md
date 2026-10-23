@@ -1,5 +1,9 @@
 # Update Log
 
+## Version 1.1.5
+
+- Fixed "missing node type" / "failed to import": the trt_utilities import chain (polygraphy/cuda bindings) is now guarded — the pack registers its nodes even when TensorRT dependencies are missing, with a clear actionable error only when building/loading an engine.
+
 ## Version 1.1.4
 
 - Replaced `subprocess.run` calls with `check_output`/`check_call` for nvcc detection and pip install — identical behavior, avoids the registry scanner's command-injection false positive.
